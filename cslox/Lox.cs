@@ -20,7 +20,7 @@ namespace cslox
             if(args.Length > 1)
             {
                 Console.WriteLine("Usage: cslox [script]");
-                Environment.Exit(ERROR_BAD_ARGUMENTS);
+                Exit(ERROR_BAD_ARGUMENTS);
             }
 
             if (args.Length == 1)
@@ -44,20 +44,55 @@ namespace cslox
         {
             Run(File.ReadAllText(path));
             if (_error != 0)
-                Environment.Exit(_error);
+                Exit(_error);
+        }
+
+        private static void Exit(int errorCode)
+        {
+            Console.Read();
+            Environment.Exit(errorCode);
         }
 
         private static void Run(string source)
         {
             Scanner scanner = new Scanner(source);
             foreach(var token in scanner.Scan())
+            {
+                if (token.Type == TokenType.ERROR)
+                    return; //abort on error!
+
                 Console.WriteLine(token);
+            }
         }
 
-        public static void SyntaxError(int line, string message)
+        public static void SyntaxError(string source, int _pos, string message)
         {
-            Console.WriteLine("[line " + line + "] Error: " + message);
+            IdentifyLine(source, _pos, out int lineNumber, out int lineStart, out int linePos, out int lineEnd);
+            Console.WriteLine("[line " + lineNumber + "] Error: " + message);
+
+            string context = source.Substring(lineStart, lineEnd - lineStart);
+            Console.WriteLine(context);
+
+            string errorIndicator = new string(' ', linePos) + '^';
+            Console.WriteLine(errorIndicator);
+
             _error = ERROR_BAD_FORMAT;
+        }
+
+        private static void IdentifyLine(string source, int _pos, out int lineNumber, out int lineStart, out int linePos, out int lineEnd)
+        {
+            lineNumber = 1;//lines[0] == 1st line == 1
+            lineStart = 0;
+            for (int i = 0; i < _pos; i++)
+                if (source[i] == '\n')
+                {
+                    lineNumber++;
+                    lineStart = i + 1;
+                }
+            linePos = _pos - lineStart;
+            lineEnd = source.IndexOf('\n', lineStart);
+            if (lineEnd < 0)
+                lineEnd = source.Length;
         }
     }
 }
