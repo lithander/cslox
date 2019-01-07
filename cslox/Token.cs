@@ -50,7 +50,7 @@
         public override string ToString()
         {
             if (Literal != null)
-                return Type + " " + Lexeme + " " + Literal;
+                return Type + " " + Literal;
             else
                 return Type + " " + Lexeme;
         }
