@@ -22,7 +22,9 @@ namespace cslox
             while(!Done)
             {
                 _start = _pos;
-                yield return NextToken();
+                var token = NextToken();
+                if (token != null)
+                    yield return token;
             }
             yield return new Token(EOF, "<EOF>", -1);
         }
@@ -53,13 +55,19 @@ namespace cslox
                     if (TryParse('/'))
                     {
                         SkipUntil('\n');
-                        return MakeToken(COMMENT);
+                        return null;//alt: MakeToken(COMMENT);
                     }
                     return MakeToken(SLASH);
-                //ELSE: ERROR
+                //WHITESPACE
+                case ' ':
+                case '\r':
+                case '\t':
+                case '\n':
+                    return null;
+                //DEFAULT -> ERROR
                 default:
                     Error("Unexpected character.");
-                    return MakeToken(ERROR);
+                    return null;//alt: MakeToken(ERROR);
             }
         }
 
