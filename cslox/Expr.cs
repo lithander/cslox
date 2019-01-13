@@ -5,24 +5,24 @@ namespace cslox
 {
     abstract class Expr
     {
-        abstract public T Accept<T>(Visitor<T> visitor);
-    }
+        public interface Visitor<T>
+        {
+            T VisitBinary(Binary binary);
+            T VisitGrouping(Grouping grouping);
+            T VisitLiteral(Literal literal);
+            T VisitUnary(Unary unary);
+        }
 
-    interface Visitor<T>
-    {
-        T VisitBinary(Binary binary);
-        T VisitGrouping(Grouping grouping);
-        T VisitLiteral(Literal literal);
-        T VisitUnary(Unary unary);
+        abstract public T Accept<T>(Visitor<T> visitor);
     }
 
     class Binary : Expr
     {
-        readonly Expr Left;
-        readonly Token Op;
-        readonly Expr Right;
+        public readonly Expr Left;
+        public readonly Token Op;
+        public readonly Expr Right;
 
-        Binary(Expr left, Token op, Expr right)
+        public Binary(Expr left, Token op, Expr right)
         {
             Left = left;
             Op = op;
@@ -37,9 +37,9 @@ namespace cslox
 
     class Grouping : Expr
     {
-        readonly Expr Expression;
+        public readonly Expr Expression;
 
-        Grouping(Expr expression)
+        public Grouping(Expr expression)
         {
             Expression = expression;
         }
@@ -52,9 +52,9 @@ namespace cslox
 
     class Literal : Expr
     {
-        readonly Object Value;
+        public readonly Object Value;
 
-        Literal(Object value)
+        public Literal(Object value)
         {
             Value = value;
         }
@@ -67,10 +67,10 @@ namespace cslox
 
     class Unary : Expr
     {
-        readonly Token Op;
-        readonly Expr Right;
+        public readonly Token Op;
+        public readonly Expr Right;
 
-        Unary(Token op, Expr right)
+        public Unary(Token op, Expr right)
         {
             Op = op;
             Right = right;

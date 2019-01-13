@@ -37,7 +37,6 @@ namespace ast_codgen
             Line();
             Line(0, $"namespace {nameSpace}");
             WriteBaseClass();
-            WriteVisitorInterface(TYPES);
             foreach (var type in TYPES)
             {
                 ParseType(type, out string className, out string fields);
@@ -51,20 +50,18 @@ namespace ast_codgen
             Line(0, "{");
             Line(1, "abstract class Expr");
             Line(1, "{");
-            Line(2, "abstract public T Accept<T>(Visitor<T> visitor);");
-            Line(1, "}");
-            Line();
-        }
 
-        private static void WriteVisitorInterface(List<string> types)
-        {
-            Line(1, "interface Visitor<T>");
-            Line(1, "{");
+            Line(2, "public interface Visitor<T>");
+            Line(2, "{");
             foreach (var type in TYPES)
             {
                 ParseType(type, out string className, out string fields);
-                Line(2, $"T Visit{className}({className} {Uncapitalize(className)});");
+                Line(3, $"T Visit{className}({className} {Uncapitalize(className)});");
             }
+            Line(2, "}");
+            Line();
+
+            Line(2, "abstract public T Accept<T>(Visitor<T> visitor);");
             Line(1, "}");
             Line();
         }
@@ -78,12 +75,12 @@ namespace ast_codgen
             foreach (var field in fields.Split(',').Select(f => f.Trim()))
             {
                 ParseField(field, out string fieldType, out string fieldName);
-                Line(2, $"readonly {fieldType} {Capitalize(fieldName)};");
+                Line(2, $"public readonly {fieldType} {Capitalize(fieldName)};");
             }
             Line();
 
             //Constructor
-            Line(2, $"{className}({fields})");
+            Line(2, $"public {className}({fields})");
             Line(2, "{");
             foreach (var field in fields.Split(','))
             {

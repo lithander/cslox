@@ -67,7 +67,7 @@ namespace cslox
                 case ';': return MakeToken(SEMICOLON);
                 case '*': return MakeToken(STAR);
                 //OPERATORS
-                case '!': return MakeToken(TryParse('=') ? BANG_EQUAL : BANG);
+                case '!': return MakeToken(TryParse ('=') ? BANG_EQUAL : BANG);
                 case '=': return MakeToken(TryParse('=') ? EQUAL_EQUAL : EQUAL);
                 case '<': return MakeToken(TryParse('=') ? LESS_EQUAL: LESS);
                 case '>': return MakeToken(TryParse('=') ? GREATER_EQUAL : GREATER);
@@ -166,7 +166,7 @@ namespace cslox
         private Token MakeNumber()
         {
             string text = _source.Substring(_start, _pos - _start);
-            var number = double.Parse(text, CultureInfo.InvariantCulture);
+            var number = double.Parse(text);
             return new Token(NUMBER, text, number, _start);
         }
         

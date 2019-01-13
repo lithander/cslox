@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace cslox
@@ -17,6 +19,8 @@ namespace cslox
 
         static void Main(string[] args)
         {
+            SetCulture();
+            Test();
             if(args.Length > 1)
             {
                 Console.WriteLine("Usage: cslox [script]");
@@ -27,6 +31,29 @@ namespace cslox
                 RunFile(args[0]);
             else
                 RunPromt();
+        }
+
+        private static void SetCulture()
+        {
+            // Change current culture
+            CultureInfo culture = CultureInfo.InvariantCulture;
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
+        }
+
+        private static void Test()
+        {
+            Expr expression = new Binary(
+            new Unary(
+                new Token(TokenType.MINUS, "-", null, 1),
+                new Literal(123)),
+            new Token(TokenType.STAR, "*", null, 1),
+            new Grouping(
+                new Literal(45.67)));
+
+            Console.WriteLine(new AstPrinter().Print(expression));
         }
 
         private static void RunPromt()
