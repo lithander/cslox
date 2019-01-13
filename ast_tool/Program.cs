@@ -36,8 +36,8 @@ namespace ast_codgen
             Line(0, "using System;");
             Line();
             Line(0, $"namespace {nameSpace}");
-            Line(0, "{");
-            Line(1, "class Expr {}");
+            WriteBaseClass();
+            WriteVisitorInterface(TYPES);
             foreach (var type in TYPES)
             {
                 ParseType(type, out string className, out string fields);
@@ -46,12 +46,27 @@ namespace ast_codgen
             Line(0, "}");
         }
 
-        private static void ParseType(string type, out string className, out string fields)
+        private static void WriteBaseClass()
         {
-            //Example Type:  "Binary : Expr left, Token operator, Expr right"
-            int i = type.IndexOf(':');
-            className = type.Substring(0, i).Trim();
-            fields = type.Substring(i+2);
+            Line(0, "{");
+            Line(1, "abstract class Expr");
+            Line(1, "{");
+            Line(2, "abstract public T Accept<T>(Visitor<T> visitor);");
+            Line(1, "}");
+            Line();
+        }
+
+        private static void WriteVisitorInterface(List<string> types)
+        {
+            Line(1, "interface Visitor<T>");
+            Line(1, "{");
+            foreach (var type in TYPES)
+            {
+                ParseType(type, out string className, out string fields);
+                Line(2, $"T Visit{className}({className} {Uncapitalize(className)});");
+            }
+            Line(1, "}");
+            Line();
         }
 
         private static void WriteClass(string className, string fields)
@@ -59,7 +74,7 @@ namespace ast_codgen
             Line(1, $"class {className} : Expr");
             Line(1, "{");
             
-            //FIELDS
+            //Fields
             foreach (var field in fields.Split(',').Select(f => f.Trim()))
             {
                 ParseField(field, out string fieldType, out string fieldName);
@@ -76,6 +91,13 @@ namespace ast_codgen
                 Line(3, $"{Capitalize(fieldName)} = {fieldName};");
             }
             Line(2, "}");
+
+            //Accept Visitor
+            Line();
+            Line(2, $"override public T Accept<T>(Visitor<T> visitor)");
+            Line(2, "{");
+            Line(3, $"return visitor.Visit{className}(this);");
+            Line(2, "}");
             Line(1, "}");
             Line();
         }
@@ -83,6 +105,19 @@ namespace ast_codgen
         private static string Capitalize(string input)
         {
             return input.First().ToString().ToUpper() + input.Substring(1);
+        }
+
+        private static string Uncapitalize(string input)
+        {
+            return input.First().ToString().ToLower() + input.Substring(1);
+        }
+
+        private static void ParseType(string type, out string className, out string fields)
+        {
+            //Example Type:  "Binary : Expr left, Token operator, Expr right"
+            int i = type.IndexOf(':');
+            className = type.Substring(0, i).Trim();
+            fields = type.Substring(i + 2);
         }
 
         private static void ParseField(string field, out string fieldType, out string fieldName)
