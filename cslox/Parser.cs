@@ -19,6 +19,16 @@ namespace cslox
 
     class Parser
     {
+        public class ParserException : Exception
+        {
+            public readonly Token Token;
+
+            public ParserException(Token token, string message) : base(message)
+            {
+                Token = token;
+            }
+        }
+
         static readonly TokenType[] EQUALITY_OPS = new[] { BANG_EQUAL, EQUAL_EQUAL };
         static readonly TokenType[] COMPARISION_OPS = new[] { GREATER, GREATER_EQUAL, LESS, LESS_EQUAL };
         static readonly TokenType[] ADDITION_OPS = new[] { MINUS, PLUS };
@@ -27,12 +37,18 @@ namespace cslox
 
         List<Token> _tokens = new List<Token>();
         int _pos = 0;
-        
-        bool Done => _pos >= _tokens.Count || _tokens[_pos].Type == EOF;
+        Token Current => _tokens[_pos];
+        Token Previous => _tokens[_pos - 1];
+        bool Done => _pos >= _tokens.Count || Current.Type == EOF;
 
         public Parser(List<Token> tokens)
         {
             _tokens = tokens;
+        }
+
+        public Expr Parse()
+        {
+            return Equality();
         }
 
         private Expr Expression()
@@ -47,7 +63,7 @@ namespace cslox
             Expr expr = Comparision();
             while(TryParse(EQUALITY_OPS))
             {
-                Token op = Previous();
+                Token op = Previous;
                 Expr right = Comparision();
                 expr = new Binary(expr, op, right);
             }
@@ -60,7 +76,7 @@ namespace cslox
             Expr expr = Addition();
             while (TryParse(COMPARISION_OPS))
             {
-                Token op = Previous();
+                Token op = Previous;
                 Expr right = Addition();
                 expr = new Binary(expr, op, right);
             }
@@ -73,7 +89,7 @@ namespace cslox
             Expr expr = Multiplication();
             while (TryParse(ADDITION_OPS))
             {
-                Token op = Previous();
+                Token op = Previous;
                 Expr right = Multiplication();
                 expr = new Binary(expr, op, right);
             }
@@ -86,7 +102,7 @@ namespace cslox
             Expr expr = Unary();
             while (TryParse(MULTIPLICATION_OPS))
             {
-                Token op = Previous();
+                Token op = Previous;
                 Expr right = Unary();
                 expr = new Binary(expr, op, right);
             }
@@ -99,7 +115,7 @@ namespace cslox
             //        | primary;
             if(TryParse(UNARY_OPS))
             {
-                Token op = Previous();
+                Token op = Previous;
                 Expr right = Unary();
                 return new Unary(op, right);
             }
@@ -110,43 +126,55 @@ namespace cslox
         {
             //primary → NUMBER | STRING | "false" | "true" | "nil"
             //          | "(" expression ")";
-            if (Done)
-                return null;
+            if(TryParseLiteral(out Literal literal))
+                return literal;
 
-            var t = _tokens[_pos++];
-            switch (t.Type)
-            {
-                case NUMBER:
-                case STRING:
-                    return new Literal(t.Literal);
-                case FALSE: return new Literal(false);
-                case TRUE: return new Literal(true);
-                case NIL: return new Literal(null);
-            }
-
-            //Rollback
-            _pos--;
-
-            //Match! Advance pos!
             if (TryParse(LEFT_PAREN))
             {
                 Expr expr = Expression();
                 if (TryParse(RIGHT_PAREN))
                     return new Grouping(expr);
 
-                throw new Exception("Expect ')' after expression.");
+                throw new ParserException(Current, "')' expected!.");
             }
 
-            throw new Exception("Expected expression!");
+            throw new ParserException(Current, "Expression expected!");
         }
 
         //Utility
+        private bool TryParseLiteral(out Literal literal)
+        {
+            literal = null;
+
+            if (Done)
+                return false;
+
+            switch (Current.Type)
+            {
+                case NUMBER:
+                case STRING:
+                    literal = new Literal(Current.Literal); break;
+                case FALSE:
+                    literal = new Literal(false); break;
+                case TRUE:
+                    literal = new Literal(true); break;
+                case NIL:
+                    literal = new Literal(null); break;
+                default:
+                    return false;
+            }
+
+            //Match! Advance!
+            _pos++;
+            return true;
+        }
+
         private bool TryParse(TokenType token)
         {
             if (Done)
                 return false;
 
-            if (_tokens[_pos].Type != token)
+            if (Current.Type != token)
                 return false;
 
             //Match! Advance pos!
@@ -159,21 +187,13 @@ namespace cslox
             if (Done)
                 return false;
 
-            var nextToken = _tokens[_pos].Type;
-            for(int i = 0; i < tokens.Length; i++)
-                if (nextToken == tokens[i])
-                {
-                    //Match! Advance pos!
-                    _pos++;
-                    return true;
-                }
+            
+            if (Array.IndexOf(tokens, Current.Type) == -1)
+                return false;
 
-            return false;
-        }
-
-        private Token Previous()
-        {
-            return _tokens[_pos - 1];
+            //Match! Advance pos!
+            _pos++;
+            return true;
         }
     }
 }

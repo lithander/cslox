@@ -20,7 +20,6 @@ namespace cslox
         static void Main(string[] args)
         {
             SetCulture();
-            Test();
             if(args.Length > 1)
             {
                 Console.WriteLine("Usage: cslox [script]");
@@ -41,19 +40,6 @@ namespace cslox
             CultureInfo.DefaultThreadCurrentUICulture = culture;
             Thread.CurrentThread.CurrentCulture = culture;
             Thread.CurrentThread.CurrentUICulture = culture;
-        }
-
-        private static void Test()
-        {
-            Expr expression = new Binary(
-            new Unary(
-                new Token(TokenType.MINUS, "-", null, 1),
-                new Literal(123)),
-            new Token(TokenType.STAR, "*", null, 1),
-            new Grouping(
-                new Literal(45.67)));
-
-            Console.WriteLine(new AstPrinter().Print(expression));
         }
 
         private static void RunPromt()
@@ -83,14 +69,19 @@ namespace cslox
         private static void Run(string source)
         {
             Scanner scanner = new Scanner(source);
-            foreach(var token in scanner.Scan())
+            var tokens = scanner.Scan().ToList();
+            Parser parser = new Parser(tokens);
+            try
             {
-                if (token.Type == TokenType.ERROR)
-                    return; //abort on error!
-
-                Console.WriteLine(token);
+                Expr expression = parser.Parse();
+                Console.WriteLine(new AstPrinter().Print(expression));
+            }
+            catch (Parser.ParserException ex)
+            {
+                SyntaxError(source, ex.Token.Position, ex.Message);
             }
         }
+      
 
         public static void SyntaxError(string source, int _pos, string message)
         {

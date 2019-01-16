@@ -46,7 +46,7 @@ namespace cslox
                 if (token != null)
                     yield return token;
             }
-            yield return new Token(EOF, "<EOF>", -1);
+            yield return new Token(EOF, "<EOF>", _start);
         }
 
         private Token NextToken()
