@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="AstPrinter.cs" />
     <Compile Include="Expr.cs" />
+    <Compile Include="Interpreter.cs" />
     <Compile Include="Lox.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

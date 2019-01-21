@@ -74,7 +74,9 @@ namespace cslox
             try
             {
                 Expr expression = parser.Parse();
-                Console.WriteLine(new AstPrinter().Print(expression));
+                Console.WriteLine(expression.Accept(new AstPrinter()));
+                Console.WriteLine(expression.Accept(new Interpreter()));
+
             }
             catch (Parser.ParserException ex)
             {

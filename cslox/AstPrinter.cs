@@ -42,10 +42,5 @@ namespace cslox
             builder.Append(')');
             return builder.ToString();
         }
-
-        internal string Print(Expr expression)
-        {
-            return expression.Accept(this);
-        }
     }
 }
