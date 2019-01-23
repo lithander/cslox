@@ -11,9 +11,17 @@ namespace cslox
 {
     class Lox
     {
-        //System Error Codes (https://docs.microsoft.com/de-de/windows/desktop/Debug/system-error-codes)
-        const int ERROR_BAD_ARGUMENTS = 0xA0;//160
-        const int ERROR_BAD_FORMAT = 0xB;//11
+        //Here is the real, long-standing exit status convention for normal termination, i.e.not by signal:
+        //Exit status 0: success
+        //Exit status 1: "failure", as defined by the program
+        //Exit status 2: command line usage error
+        const int ERROR_BAD_ARGUMENTS = 2;
+        const int ERROR_FAILURE = 1;
+
+        static Scanner _scanner = new Scanner();
+        static Parser _parser = new Parser();
+        static Interpreter _interpreter = new Interpreter();
+        static AstPrinter _printer = new AstPrinter();
 
         static int _error = 0;
 
@@ -68,35 +76,50 @@ namespace cslox
 
         private static void Run(string source)
         {
-            Scanner scanner = new Scanner(source);
-            var tokens = scanner.Scan().ToList();
-            Parser parser = new Parser(tokens);
             try
             {
-                Expr expression = parser.Parse();
-                Console.WriteLine(expression.Accept(new AstPrinter()));
-                Console.WriteLine(expression.Accept(new Interpreter()));
+                var tokens = _scanner.Scan(source).ToList();
+                Expr expression = _parser.Parse(tokens);
+                //Console.WriteLine(expression.Accept(_printer));
+                var result = expression.Accept(_interpreter);
+                Console.WriteLine(ToLoxString(result));
 
             }
-            catch (Parser.ParserException ex)
+            catch (Scanner.ScannerError error)
             {
-                SyntaxError(source, ex.Token.Position, ex.Message);
+                Error("Scanner", source, error.Position, error.Message);
+            }
+            catch (Parser.ParserError error)
+            {
+                Error("Parser", source, error.Token.Position, error.Message);
+            }
+            catch (Interpreter.InterpreterError error)
+            {
+                Error("Runtime", source, error.Token.Position, error.Message);
+            }
+            finally
+            {
+                _error = ERROR_FAILURE;
             }
         }
-      
 
-        public static void SyntaxError(string source, int _pos, string message)
+        private static void Error(string prefix, string source, int _pos, string message)
         {
             IdentifyLine(source, _pos, out int lineNumber, out int lineStart, out int linePos, out int lineEnd);
-            Console.WriteLine("[line " + lineNumber + "] Error: " + message);
+            Console.WriteLine($"[line {lineNumber}] {prefix} Error: {message}");
 
             string context = source.Substring(lineStart, lineEnd - lineStart);
             Console.WriteLine(context);
 
             string errorIndicator = new string(' ', linePos) + '^';
             Console.WriteLine(errorIndicator);
+        }
 
-            _error = ERROR_BAD_FORMAT;
+        private static string ToLoxString(object obj)
+        {
+            if (obj == null) return "nil";
+
+            return obj.ToString();
         }
 
         private static void IdentifyLine(string source, int _pos, out int lineNumber, out int lineStart, out int linePos, out int lineEnd)

@@ -19,11 +19,11 @@ namespace cslox
 
     class Parser
     {
-        public class ParserException : Exception
+        public class ParserError : Exception
         {
             public readonly Token Token;
 
-            public ParserException(Token token, string message) : base(message)
+            public ParserError(Token token, string message) : base(message)
             {
                 Token = token;
             }
@@ -35,20 +35,22 @@ namespace cslox
         static readonly TokenType[] MULTIPLICATION_OPS = new[] { SLASH, STAR };
         static readonly TokenType[] UNARY_OPS = new[] { BANG, MINUS };
 
-        List<Token> _tokens = new List<Token>();
+        List<Token> _tokens = null;
         int _pos = 0;
         Token Current => _tokens[_pos];
         Token Previous => _tokens[_pos - 1];
         bool Done => _pos >= _tokens.Count || Current.Type == EOF;
 
-        public Parser(List<Token> tokens)
+        public Parser()
         {
-            _tokens = tokens;
         }
 
-        public Expr Parse()
+        public Expr Parse(List<Token> tokens)
         {
-            return Equality();
+            _pos = 0;
+            _tokens = tokens;
+            //TODO: Parse multiple expressions, ensure ';' delimiter between them!
+            return Expression();
         }
 
         private Expr Expression()
@@ -135,10 +137,10 @@ namespace cslox
                 if (TryParse(RIGHT_PAREN))
                     return new Grouping(expr);
 
-                throw new ParserException(Current, "')' expected!.");
+                throw new ParserError(Current, "')' expected!");
             }
 
-            throw new ParserException(Current, "Expression expected!");
+            throw new ParserError(Current, "Expression expected!");
         }
 
         //Utility

@@ -6,6 +6,18 @@ namespace cslox
 {
     internal class Scanner
     {
+        public class ScannerError : Exception
+        {
+            public readonly string SourceText;
+            public readonly int Position;
+
+            public ScannerError(string source, int position, string message) : base(message)
+            {
+                SourceText = source;
+                Position = position;
+            }
+        }
+
         private readonly static Dictionary<string, TokenType> KEYWORDS = new Dictionary<string, TokenType>
         {
             { "and",    AND     },
@@ -32,14 +44,15 @@ namespace cslox
 
         bool Done => _pos >= _source.Length;
 
-        public Scanner(string source)
+        public Scanner()
         {
-            _source = source;
         }
 
-        internal IEnumerable<Token> Scan()
+        internal IEnumerable<Token> Scan(string source)
         {
-            while(!Done)
+            _pos = 0;
+            _source = source;
+            while (!Done)
             {
                 _start = _pos;
                 var token = NextToken();
@@ -86,8 +99,7 @@ namespace cslox
                 case '"':
                     if (SkipPast('"'))
                         return MakeString();
-                    Error("Unterminated string.");
-                    return null;
+                    throw new ScannerError(_source, _pos, "Unexpected character.");
                 //DEFAULT -> ERROR
                 default:
                     if (IsDigit(c))
@@ -103,8 +115,7 @@ namespace cslox
                         Skip(IsAlpha);
                         return MakeIdentifier();
                     }
-                    Error("Unexpected character.");
-                    return null;//alt: MakeToken(ERROR);
+                    throw new ScannerError(_source, _pos, "Unexpected character.");
             }
         }
 
@@ -143,11 +154,6 @@ namespace cslox
             //Match! Advance pos!
             _pos++;
             return true;
-        }
-
-        private void Error(string message)
-        {
-            Lox.SyntaxError(_source, _start, message);
         }
 
         private Token MakeToken(TokenType type)

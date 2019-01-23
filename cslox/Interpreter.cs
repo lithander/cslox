@@ -8,35 +8,40 @@ namespace cslox
 {
     class Interpreter : Expr.Visitor<object>
     {
+        public class InterpreterError : Exception
+        {
+            public readonly Token Token;
+
+            public InterpreterError(Token token, string message) : base(message)
+            {
+                Token = token;
+            }
+        }
+
         public object VisitBinary(Binary binary)
         {
-            object left = binary.Left.Accept(this);
-            object right = binary.Right.Accept(this);
-
             switch (binary.Op.Type)
             {
                 case TokenType.MINUS:
-                    return (double)left - (double)right;
+                    return EvalBinary(binary, (l, r) => l - r);
                 case TokenType.SLASH:
-                    return (double)left / (double)right;
+                    return EvalBinary(binary, (l, r) => l / r);
                 case TokenType.STAR:
-                    return (double)left * (double)right;
+                    return EvalBinary(binary, (l, r) => l * r);
                 case TokenType.PLUS:
-                    if(left is string sLeft && right is string sRight)
-                        return sLeft + sRight;
-                    return (double)left + (double)right;
+                    return EvalBinaryPlus(binary);
                 case TokenType.GREATER:
-                    return (double)left > (double)right;
+                    return EvalBinary(binary, (l, r) => l > r);
                 case TokenType.GREATER_EQUAL:
-                    return (double)left >= (double)right;
+                    return EvalBinary(binary, (l, r) => l >= r);
                 case TokenType.LESS:
-                    return (double)left < (double)right;
+                    return EvalBinary(binary, (l, r) => l < r);
                 case TokenType.LESS_EQUAL:
-                    return (double)left <= (double)right;
+                    return EvalBinary(binary, (l, r) => l <= r);
                 case TokenType.EQUAL_EQUAL:
-                    return left.Equals(right);
+                    return IsBinaryEqual(binary);
                 case TokenType.BANG_EQUAL:
-                    return IsEqual(left, right);
+                    return !IsBinaryEqual(binary);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -58,7 +63,9 @@ namespace cslox
             switch (unary.Op.Type)
             {
                 case TokenType.MINUS:
-                    return -(double)right;
+                    if(right is double dRight)
+                        return -dRight;
+                    throw new InterpreterError(unary.Op, "Operand must be a number!");
                 case TokenType.BANG:
                     return !IsTrue(right);
                 default:
@@ -75,12 +82,38 @@ namespace cslox
             return true;
         }
 
-        private static object IsEqual(object left, object right)
+        private bool IsBinaryEqual(Binary binary)
         {
+            object left = binary.Left.Accept(this);
+            object right = binary.Right.Accept(this);
             if (left == null && right == null) return true;
             if (left == null) return false;
-            return !left.Equals(right);
+            return left.Equals(right);
         }
 
+
+        private object EvalBinaryPlus(Binary binary)
+        {
+            object left = binary.Left.Accept(this);
+            object right = binary.Right.Accept(this);
+            if (left is string sLeft && right is string sRight)
+                return sLeft + sRight;
+            if (left is double dLeft && right is double dRight)
+                return dLeft + dRight;
+            throw new InterpreterError(binary.Op, "Operands must be two numbers or two strings.");
+        }
+
+        private object EvalBinary(Binary binary, Func<double, double, object> operation)
+        {
+            object left = binary.Left.Accept(this);
+            if (!(left is double))
+                throw new InterpreterError(binary.Op, "Left operand must be a number!");
+
+            object right = binary.Right.Accept(this);
+            if (!(right is double))
+                throw new InterpreterError(binary.Op, "Right operand must be a numbers!");
+
+            return (double)left + (double)right;
+        }
     }
 }
