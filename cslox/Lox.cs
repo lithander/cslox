@@ -11,7 +11,7 @@ namespace cslox
 {
     class Lox
     {
-        //Here is the real, long-standing exit status convention for normal termination, i.e.not by signal:
+        //Here is the real, long-standing exit status convention for normal termination, i.e. not by signal:
         //Exit status 0: success
         //Exit status 1: "failure", as defined by the program
         //Exit status 2: command line usage error
@@ -70,7 +70,7 @@ namespace cslox
 
         private static void Exit(int errorCode)
         {
-            Console.Read();
+            Console.Read(); //TODO: remove this! it keeps the window open in case of errors and in non-REPL mode.
             Environment.Exit(errorCode);
         }
 
@@ -79,11 +79,8 @@ namespace cslox
             try
             {
                 var tokens = _scanner.Scan(source).ToList();
-                Expr expression = _parser.Parse(tokens);
-                //Console.WriteLine(expression.Accept(_printer));
-                var result = expression.Accept(_interpreter);
-                Console.WriteLine(ToLoxString(result));
-
+                foreach (var stmt in _parser.Parse(tokens))
+                    stmt.Accept(_interpreter);
             }
             catch (Scanner.ScannerError error)
             {
@@ -101,6 +98,11 @@ namespace cslox
             {
                 _error = ERROR_FAILURE;
             }
+        }
+
+        internal static void Print(object value)
+        {
+            Console.WriteLine(ToLoxString(value));
         }
 
         private static void Error(string prefix, string source, int _pos, string message)

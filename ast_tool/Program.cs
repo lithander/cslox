@@ -7,7 +7,7 @@ namespace ast_codgen
 {
     class Program
     {
-        static List<string> TYPES = new List<string>
+        static List<string> EXPR_TYPES = new List<string>
         {
             "Binary   : Expr left, Token op, Expr right",
             "Grouping : Expr expression",
@@ -15,7 +15,14 @@ namespace ast_codgen
             "Unary    : Token op, Expr right"
         };
 
+        static List<string> STMT_TYPES = new List<string>
+        {
+            "ExpressionStatement : Expr expression",
+            "PrintStatement      : Expr expression"
+        };
+
         private static StreamWriter _writer;
+        private static string _path;
 
         static void Main(string[] args)
         {
@@ -24,36 +31,39 @@ namespace ast_codgen
                 Console.WriteLine("Usage: generate_ast <output directory>");
                 return;
             }
-
-            _writer = File.CreateText(args[0]);
-            WriteAST("cslox");
-            _writer.Close();
+            _path = args[0];
+            WriteAST("cslox", "Expr", EXPR_TYPES);
+            WriteAST("cslox", "Stmt", STMT_TYPES);
         }
 
-        private static void WriteAST(string nameSpace)
+        private static void WriteAST(string nameSpace, string baseClassName, IEnumerable<string> types)
         {
+            _writer = File.CreateText(Path.Combine(_path, baseClassName + ".cs"));
+
             Line(0, "//Code auto-generated. Don't edit by hand! Change, build and run ast_codgen instead!");
             Line(0, "using System;");
             Line();
             Line(0, $"namespace {nameSpace}");
-            WriteBaseClass();
-            foreach (var type in TYPES)
+            WriteBaseClass(baseClassName, types);
+            foreach (var type in types)
             {
                 ParseType(type, out string className, out string fields);
-                WriteClass(className, fields);
+                WriteClass(className, baseClassName, fields);
             }
             Line(0, "}");
+
+            _writer.Close();
         }
 
-        private static void WriteBaseClass()
+        private static void WriteBaseClass(string baseClassName, IEnumerable<string> types)
         {
             Line(0, "{");
-            Line(1, "abstract class Expr");
+            Line(1, $"abstract class {baseClassName}");
             Line(1, "{");
 
             Line(2, "public interface Visitor<T>");
             Line(2, "{");
-            foreach (var type in TYPES)
+            foreach (var type in types)
             {
                 ParseType(type, out string className, out string fields);
                 Line(3, $"T Visit{className}({className} {Uncapitalize(className)});");
@@ -66,9 +76,9 @@ namespace ast_codgen
             Line();
         }
 
-        private static void WriteClass(string className, string fields)
+        private static void WriteClass(string className, string baseClassName, string fields)
         {
-            Line(1, $"class {className} : Expr");
+            Line(1, $"class {className} : {baseClassName}");
             Line(1, "{");
             
             //Fields

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace cslox
 {
-    class Interpreter : Expr.Visitor<object>
+    class Interpreter : Expr.Visitor<object>, Stmt.Visitor<bool>
     {
         public class InterpreterError : Exception
         {
@@ -113,7 +113,20 @@ namespace cslox
             if (!(right is double))
                 throw new InterpreterError(binary.Op, "Right operand must be a numbers!");
 
-            return (double)left + (double)right;
+            return operation((double)left, (double)right);
         }
-    }
+
+        public bool VisitExpressionStatement(ExpressionStatement expressionStatement)
+        {
+            object value = expressionStatement.Expression.Accept(this);
+            return true;
+        }
+
+        public bool VisitPrintStatement(PrintStatement printStatement)
+        {
+            object value = printStatement.Expression.Accept(this);
+            Lox.Print(value);
+            return true;
+        }
+    }   
 }

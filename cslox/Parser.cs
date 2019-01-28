@@ -45,12 +45,40 @@ namespace cslox
         {
         }
 
-        public Expr Parse(List<Token> tokens)
+        public IEnumerable<Stmt> Parse(List<Token> tokens)
         {
             _pos = 0;
             _tokens = tokens;
-            //TODO: Parse multiple expressions, ensure ';' delimiter between them!
-            return Expression();
+            while (!Done)
+                yield return Statement();
+        }
+
+        private Stmt Statement()
+        {
+            if (TryParse(PRINT))
+                return PrintStatement();
+
+            return ExpressionStatement();
+        }
+
+        private Stmt ExpressionStatement()
+        {
+            Expr expr = Expression();
+
+            if (TryParse(SEMICOLON))
+                return new ExpressionStatement(expr);
+
+            throw new ParserError(Current, "';' expected after expression.");
+        }
+
+        private Stmt PrintStatement()
+        {
+            Expr value = Expression();
+
+            if (TryParse(SEMICOLON))
+                return new PrintStatement(value);
+
+            throw new ParserError(Current,  "';' expected after value.");
         }
 
         private Expr Expression()
