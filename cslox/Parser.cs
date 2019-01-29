@@ -9,18 +9,19 @@ namespace cslox
         program         → declaration* EOF ;
         declaration     → varDecl | statement ;
         varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement       → exprStmt | printStmt ;
+        statement       → exprStmt | printStmt | block ;
         exprStmt        → expression ";" ;
         printStmt       → "print" expression ";" ;
+        block           → "{" declaration* "}" ;
         expression      → assignment ;
         assignment      → IDENTIFIER "=" assignment | equality ;
-        equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-        comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
-        addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
-        multiplication → unary ( ( "/" | "*" ) unary )* ;
-        unary          → ( "!" | "-" ) unary | primary ;
-        primary        → NUMBER | STRING | "false" | "true" | "nil"
-                       | "(" expression ")" | IDENTIFIER ;
+        equality        → comparison ( ( "!=" | "==" ) comparison )* ;
+        comparison      → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
+        addition        → multiplication ( ( "-" | "+" ) multiplication )* ;
+        multiplication  → unary ( ( "/" | "*" ) unary )* ;
+        unary           → ( "!" | "-" ) unary | primary ;
+        primary         → NUMBER | STRING | "false" | "true" | "nil"
+                        | "(" expression ")" | IDENTIFIER ;
     */
 
     class Parser
@@ -47,6 +48,8 @@ namespace cslox
         Token Previous => _tokens[_pos - 1];
         bool Done => _pos >= _tokens.Count || Current.Type == EOF;
 
+        public bool EvalAndPrintUnterminatedExpression = false;
+
         public Parser()
         {
         }
@@ -72,7 +75,22 @@ namespace cslox
             if (TryParse(PRINT))
                 return PrintStatement();
 
+            if (TryParse(LEFT_BRACE))
+                return Block();
+
             return ExpressionStatement();
+        }
+
+        private Block Block()
+        {
+            List<Stmt> statements = new List<Stmt>();
+            while (!Done && Current.Type != RIGHT_BRACE)
+                statements.Add(Declaration());
+
+            if (TryParse(RIGHT_BRACE))
+                return new Block(statements);
+
+            throw new ParserError(Current, "'}' expected after block.");
         }
 
         private Stmt VarStatement()
@@ -98,6 +116,10 @@ namespace cslox
 
             if (TryParse(SEMICOLON))
                 return new ExpressionStatement(expr);
+
+            //Instead of throwing an error we may convert the dangling Expression into a PrintStatement:
+            if(EvalAndPrintUnterminatedExpression)
+                return new PrintStatement(expr);
 
             throw new ParserError(Current, "';' expected after expression.");
         }

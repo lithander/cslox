@@ -20,6 +20,7 @@ namespace ast_codgen
         static List<string> STMT_TYPES = new List<string>
         {
             "ExpressionStatement : Expr expression",
+            "Block               : List<Stmt> statements",
             "PrintStatement      : Expr expression",
             "VarStatement        : Token name, Expr initializer"  
         };
@@ -45,6 +46,7 @@ namespace ast_codgen
 
             Line(0, "//Code auto-generated. Don't edit by hand! Change, build and run ast_codgen instead!");
             Line(0, "using System;");
+            Line(0, "using System.Collections.Generic;");
             Line();
             Line(0, $"namespace {nameSpace}");
             WriteBaseClass(baseClassName, types);

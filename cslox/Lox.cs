@@ -51,7 +51,9 @@ namespace cslox
 
         private static void RunPromt()
         {
-            for(;;)
+            _parser.EvalAndPrintUnterminatedExpression = true;
+
+            for (;;)
             {
                 Console.Write("> ");
                 Run(Console.ReadLine());
@@ -62,6 +64,8 @@ namespace cslox
 
         private static void RunFile(string path)
         {
+            _parser.EvalAndPrintUnterminatedExpression = false;
+
             Run(File.ReadAllText(path));
             if (_error != 0)
                 Exit(_error);

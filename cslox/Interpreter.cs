@@ -151,5 +151,21 @@ namespace cslox
             _env.Assign(assign.Name, assign.Value.Accept(this));
             return value;
         }
+
+        public bool VisitBlock(Block block)
+        {
+            var previous = _env;
+            _env = new Environment(_env);
+            try
+            {
+                foreach (var stmt in block.Statements)
+                    stmt.Accept(this);
+            }
+            finally
+            {
+                _env = previous;
+            }
+            return true;
+        }
     }   
 }

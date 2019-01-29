@@ -11,11 +11,24 @@ namespace cslox
         //TODO: consider defining and using EnvironmentError
 
         private Dictionary<string, object> _globals = new Dictionary<string, object>();
+        private Environment _parent = null;
+
+        internal Environment()
+        {
+        }
+
+        internal Environment(Environment parent)
+        {
+            _parent = parent;
+        }
 
         internal object Get(Token name)
         {
             if (_globals.TryGetValue(name.Lexeme, out var value))
                 return value;
+
+            if (_parent != null)
+                return _parent.Get(name);
 
             throw new Interpreter.InterpreterError(name, "Variable must be declared before use!");
         }
@@ -27,10 +40,12 @@ namespace cslox
 
         internal void Assign(Token name, object value)
         {
-            if (!_globals.ContainsKey(name.Lexeme))
+            if (_globals.ContainsKey(name.Lexeme))
+                _globals[name.Lexeme] = value;
+            else if (_parent != null)
+                _parent.Assign(name, value);
+            else
                 throw new Interpreter.InterpreterError(name, "Variable must be declared before it can be assigned!");
-
-            _globals[name.Lexeme] = value;
         }
     }
 }

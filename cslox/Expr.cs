@@ -1,5 +1,6 @@
 //Code auto-generated. Don't edit by hand! Change, build and run ast_codgen instead!
 using System;
+using System.Collections.Generic;
 
 namespace cslox
 {
