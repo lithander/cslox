@@ -71,7 +71,7 @@ namespace cslox
         private static void Exit(int errorCode)
         {
             Console.Read(); //TODO: remove this! it keeps the window open in case of errors and in non-REPL mode.
-            Environment.Exit(errorCode);
+            System.Environment.Exit(errorCode);
         }
 
         private static void Run(string source)

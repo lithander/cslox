@@ -30,6 +30,11 @@ namespace cslox
             return Parenthesize(unary.Op.Lexeme, unary.Right);
         }
 
+        public string VisitVariable(Variable variable)
+        {
+            return variable.Name.Lexeme;
+        }
+
         private string Parenthesize(string name, params Expr[] expressions)
         {
             StringBuilder builder = new StringBuilder();

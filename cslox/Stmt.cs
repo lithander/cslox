@@ -9,6 +9,7 @@ namespace cslox
         {
             T VisitExpressionStatement(ExpressionStatement expressionStatement);
             T VisitPrintStatement(PrintStatement printStatement);
+            T VisitVarStatement(VarStatement varStatement);
         }
 
         abstract public T Accept<T>(Visitor<T> visitor);
@@ -41,6 +42,23 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitPrintStatement(this);
+        }
+    }
+
+    class VarStatement : Stmt
+    {
+        public readonly Token Name;
+        public readonly Expr Initializer;
+
+        public VarStatement(Token name, Expr initializer)
+        {
+            Name = name;
+            Initializer = initializer;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitVarStatement(this);
         }
     }
 

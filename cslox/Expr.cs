@@ -11,6 +11,7 @@ namespace cslox
             T VisitGrouping(Grouping grouping);
             T VisitLiteral(Literal literal);
             T VisitUnary(Unary unary);
+            T VisitVariable(Variable variable);
         }
 
         abstract public T Accept<T>(Visitor<T> visitor);
@@ -79,6 +80,21 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitUnary(this);
+        }
+    }
+
+    class Variable : Expr
+    {
+        public readonly Token Name;
+
+        public Variable(Token name)
+        {
+            Name = name;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitVariable(this);
         }
     }
 

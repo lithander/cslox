@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AstPrinter.cs" />
+    <Compile Include="Environment.cs" />
     <Compile Include="Expr.cs" />
     <Compile Include="Interpreter.cs" />
     <Compile Include="Lox.cs" />

@@ -8,6 +8,8 @@ namespace cslox
 {
     class Interpreter : Expr.Visitor<object>, Stmt.Visitor<bool>
     {
+        private Environment _env = new Environment();
+
         public class InterpreterError : Exception
         {
             public readonly Token Token;
@@ -126,6 +128,19 @@ namespace cslox
         {
             object value = printStatement.Expression.Accept(this);
             Lox.Print(value);
+            return true;
+        }
+
+        public object VisitVariable(Variable variable)
+        {
+            return _env.Get(variable.Name);
+        }
+
+        public bool VisitVarStatement(VarStatement varStatement)
+        {
+            string name = varStatement.Name.Lexeme;
+            object value = varStatement.Initializer.Accept(this);
+            _env.Declare(name, value);
             return true;
         }
     }   

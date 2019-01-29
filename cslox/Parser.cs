@@ -11,10 +11,16 @@ namespace cslox
         comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
         addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
         multiplication → unary ( ( "/" | "*" ) unary )* ;
-        unary          → ( "!" | "-" ) unary
-                       | primary ;
+        unary          → ( "!" | "-" ) unary | primary ;
         primary        → NUMBER | STRING | "false" | "true" | "nil"
-                       | "(" expression ")" ;
+                       | "(" expression ")" | IDENTIFIER ;
+
+        program         → declaration* EOF ;
+        declaration     → varDecl | statement ;
+        varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
+        statement       → exprStmt | printStmt ;
+        exprStmt        → expression ";" ;
+        printStmt       → "print" expression ";" ;
     */
 
     class Parser
@@ -50,7 +56,15 @@ namespace cslox
             _pos = 0;
             _tokens = tokens;
             while (!Done)
-                yield return Statement();
+                yield return Declaration();
+        }
+
+        private Stmt Declaration()
+        {
+            if (TryParse(VAR))
+                return VarStatement();
+
+            return Statement();
         }
 
         private Stmt Statement()
@@ -59,6 +73,23 @@ namespace cslox
                 return PrintStatement();
 
             return ExpressionStatement();
+        }
+
+        private Stmt VarStatement()
+        {
+            if (!TryParse(IDENTIFIER))
+                throw new ParserError(Current, "variable name expected.");
+
+            Token varName = Previous;
+
+            Expr initializer = null;
+            if (TryParse(EQUAL))
+                initializer = Expression();
+
+            if (TryParse(SEMICOLON))
+                return new VarStatement(varName, initializer);
+
+            throw new ParserError(Current, "';' expected after variable declaration.");
         }
 
         private Stmt ExpressionStatement()
@@ -159,6 +190,9 @@ namespace cslox
             if(TryParseLiteral(out Literal literal))
                 return literal;
 
+            if (TryParse(IDENTIFIER))
+                return new Variable(Previous);
+
             if (TryParse(LEFT_PAREN))
             {
                 Expr expr = Expression();
@@ -199,12 +233,12 @@ namespace cslox
             return true;
         }
 
-        private bool TryParse(TokenType token)
+        private bool TryParse(TokenType type)
         {
             if (Done)
                 return false;
 
-            if (Current.Type != token)
+            if (Current.Type != type)
                 return false;
 
             //Match! Advance pos!

@@ -12,13 +12,15 @@ namespace ast_codgen
             "Binary   : Expr left, Token op, Expr right",
             "Grouping : Expr expression",
             "Literal  : Object value",
-            "Unary    : Token op, Expr right"
+            "Unary    : Token op, Expr right",
+            "Variable : Token name"
         };
 
         static List<string> STMT_TYPES = new List<string>
         {
             "ExpressionStatement : Expr expression",
-            "PrintStatement      : Expr expression"
+            "PrintStatement      : Expr expression",
+            "VarStatement        : Token name, Expr initializer"  
         };
 
         private static StreamWriter _writer;
