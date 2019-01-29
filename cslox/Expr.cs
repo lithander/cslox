@@ -7,6 +7,7 @@ namespace cslox
     {
         public interface Visitor<T>
         {
+            T VisitAssign(Assign assign);
             T VisitBinary(Binary binary);
             T VisitGrouping(Grouping grouping);
             T VisitLiteral(Literal literal);
@@ -15,6 +16,23 @@ namespace cslox
         }
 
         abstract public T Accept<T>(Visitor<T> visitor);
+    }
+
+    class Assign : Expr
+    {
+        public readonly Token Name;
+        public readonly Expr Value;
+
+        public Assign(Token name, Expr value)
+        {
+            Name = name;
+            Value = value;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitAssign(this);
+        }
     }
 
     class Binary : Expr

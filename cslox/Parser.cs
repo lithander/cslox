@@ -6,7 +6,14 @@ namespace cslox
 {
     /* LOX EXPRESSION GRAMMAR (Chapter 6.2)
     
-        expression     → equality ;
+        program         → declaration* EOF ;
+        declaration     → varDecl | statement ;
+        varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
+        statement       → exprStmt | printStmt ;
+        exprStmt        → expression ";" ;
+        printStmt       → "print" expression ";" ;
+        expression      → assignment ;
+        assignment      → IDENTIFIER "=" assignment | equality ;
         equality       → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
         addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
@@ -14,13 +21,6 @@ namespace cslox
         unary          → ( "!" | "-" ) unary | primary ;
         primary        → NUMBER | STRING | "false" | "true" | "nil"
                        | "(" expression ")" | IDENTIFIER ;
-
-        program         → declaration* EOF ;
-        declaration     → varDecl | statement ;
-        varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement       → exprStmt | printStmt ;
-        exprStmt        → expression ";" ;
-        printStmt       → "print" expression ";" ;
     */
 
     class Parser
@@ -114,8 +114,29 @@ namespace cslox
 
         private Expr Expression()
         {
-            //→ equality;
-            return Equality();
+            //→ assignment;
+            return Assignment();
+        }
+
+        private Expr Assignment()
+        {
+            Expr expr = Equality();
+
+            if (TryParse(EQUAL))
+            {
+                Token equals = Previous;
+                Expr value = Assignment();
+
+                if (expr is Variable variable)
+                {
+                    Token name = variable.Name;
+                    return new Assign(name, value);
+                }
+
+                throw new ParserError(equals, "assignment target is invalid!");
+            }
+
+            return expr;
         }
 
         private Expr Equality()
@@ -186,7 +207,7 @@ namespace cslox
         private Expr Primary()
         {
             //primary → NUMBER | STRING | "false" | "true" | "nil"
-            //          | "(" expression ")";
+            //          | IDENTIFIER | "(" expression ")";
             if(TryParseLiteral(out Literal literal))
                 return literal;
 

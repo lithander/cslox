@@ -143,5 +143,13 @@ namespace cslox
             _env.Declare(name, value);
             return true;
         }
+
+        public object VisitAssign(Assign assign)
+        {
+            //TODO: we could do without an explicit VarStatement if we let Assign declare new variables too
+            object value = assign.Value.Accept(this);
+            _env.Assign(assign.Name, assign.Value.Accept(this));
+            return value;
+        }
     }   
 }

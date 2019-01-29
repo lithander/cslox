@@ -21,7 +21,6 @@ namespace cslox
         static Scanner _scanner = new Scanner();
         static Parser _parser = new Parser();
         static Interpreter _interpreter = new Interpreter();
-        static AstPrinter _printer = new AstPrinter();
 
         static int _error = 0;
 

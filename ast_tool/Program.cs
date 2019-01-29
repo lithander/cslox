@@ -9,6 +9,7 @@ namespace ast_codgen
     {
         static List<string> EXPR_TYPES = new List<string>
         {
+            "Assign   : Token name, Expr value",
             "Binary   : Expr left, Token op, Expr right",
             "Grouping : Expr expression",
             "Literal  : Object value",
