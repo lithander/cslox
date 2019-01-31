@@ -9,8 +9,9 @@ namespace cslox
         program         → declaration* EOF ;
         declaration     → varDecl | statement ;
         varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement       → exprStmt | printStmt | block ;
+        statement       → exprStmt | ifStmt | printStmt | block ;
         exprStmt        → expression ";" ;
+        ifStmt          → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt       → "print" expression ";" ;
         block           → "{" declaration* "}" ;
         expression      → assignment ;
@@ -72,6 +73,9 @@ namespace cslox
 
         private Stmt Statement()
         {
+            if (TryParse(IF))
+                return IfStatement();
+
             if (TryParse(PRINT))
                 return PrintStatement();
 
@@ -79,6 +83,25 @@ namespace cslox
                 return Block();
 
             return ExpressionStatement();
+        }
+
+        private Stmt IfStatement()
+        {
+            if (!TryParse(LEFT_PAREN))
+                throw new ParserError(Current, "'(' expected after if.");
+
+            Expr condition = Expression();
+
+            if (!TryParse(RIGHT_PAREN))
+                throw new ParserError(Current, "')' expected after if condition.");
+
+            Stmt thenBranch = Statement();
+
+            Stmt elseBranch = null;
+            if (TryParse(ELSE))
+                elseBranch = Statement();
+
+            return new IfStatement(condition, thenBranch, elseBranch);
         }
 
         private Block Block()

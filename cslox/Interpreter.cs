@@ -167,5 +167,16 @@ namespace cslox
             }
             return true;
         }
+
+        public bool VisitIfStatement(IfStatement ifStatement)
+        {
+            object condition = ifStatement.Condition.Accept(this);
+            if (IsTrue(condition))
+                ifStatement.ThenBranch.Accept(this);
+            else
+                ifStatement.ElseBranch.Accept(this);
+    
+            return true;
+        }
     }   
 }

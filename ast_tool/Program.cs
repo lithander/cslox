@@ -21,6 +21,7 @@ namespace ast_codgen
         {
             "ExpressionStatement : Expr expression",
             "Block               : List<Stmt> statements",
+            "IfStatement         : Expr condition, Stmt thenBranch, Stmt elseBranch",
             "PrintStatement      : Expr expression",
             "VarStatement        : Token name, Expr initializer"  
         };

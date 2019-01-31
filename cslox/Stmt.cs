@@ -10,6 +10,7 @@ namespace cslox
         {
             T VisitExpressionStatement(ExpressionStatement expressionStatement);
             T VisitBlock(Block block);
+            T VisitIfStatement(IfStatement ifStatement);
             T VisitPrintStatement(PrintStatement printStatement);
             T VisitVarStatement(VarStatement varStatement);
         }
@@ -44,6 +45,25 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitBlock(this);
+        }
+    }
+
+    class IfStatement : Stmt
+    {
+        public readonly Expr Condition;
+        public readonly Stmt ThenBranch;
+        public readonly Stmt ElseBranch;
+
+        public IfStatement(Expr condition, Stmt thenBranch, Stmt elseBranch)
+        {
+            Condition = condition;
+            ThenBranch = thenBranch;
+            ElseBranch = elseBranch;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitIfStatement(this);
         }
     }
 
