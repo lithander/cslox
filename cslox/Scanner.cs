@@ -164,7 +164,9 @@ namespace cslox
 
         private Token MakeString()
         {
-            string text = _source.Substring(_start, _pos - _start);
+            int from = _start + 1;
+            int to = _pos - 1;
+            string text = _source.Substring(from, to - from);
             return new Token(STRING, text, text, _start);
         }
 
