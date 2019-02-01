@@ -9,11 +9,12 @@ namespace cslox
         program         → declaration* EOF ;
         declaration     → varDecl | statement ;
         varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement       → exprStmt | ifStmt | printStmt | whileStmt | block ;
+        statement       → exprStmt | ifStmt | printStmt | whileStmt | forStmt | block ;
         exprStmt        → expression ";" ;
         ifStmt          → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt       → "print" expression ";" ;
         whileStmt       → "while" "(" expression ")" statement ;
+        forStmt         → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
         block           → "{" declaration* "}" ;
         expression      → assignment ;
         assignment      → IDENTIFIER "=" assignment | logic_or ;
@@ -82,6 +83,9 @@ namespace cslox
             if (TryParse(WHILE))
                 return WhileStatement();
 
+            if (TryParse(FOR))
+                return ForStatement();
+
             if (TryParse(PRINT))
                 return PrintStatement();
 
@@ -91,15 +95,79 @@ namespace cslox
             return ExpressionStatement();
         }
 
+        private Stmt ForStatement()
+        {
+            //forStmt         → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+            if (!TryParse(LEFT_PAREN))
+                throw new ParserError(Current, "'(' expected after 'for'.");
+
+            //initializer is optional
+            Stmt initializer = null;
+            if(!TryParse(SEMICOLON)) //initializer skipped?
+            {
+                if (TryParse(VAR))
+                    initializer = VarStatement();
+                else
+                    initializer = ExpressionStatement();
+            }
+
+            //condition is optional
+            Expr condition = null;
+            if (!TryParse(SEMICOLON)) //condition skipped?
+                condition = Expression();
+            if (!TryParse(SEMICOLON))
+                throw new ParserError(Current, "';' expected after 'for' loop condition.");
+
+            //increment is also optional
+            Expr increment = null;
+            if (!TryParse(RIGHT_PAREN)) //increment skipped?
+                increment = Expression();
+            if (!TryParse(RIGHT_PAREN))
+                throw new ParserError(Current, "')' expected after 'for' clauses.");
+
+            //For is represented as Syntax-Tree build from primitives
+            //{
+            //    var i = 0;
+            //    while (i < 10)
+            //    {
+            //        print i;
+            //        i = i + 1;
+            //    }
+            //}
+
+            Stmt body = Statement();
+            //combine body and increment in the inner block
+            if (increment != null)
+                body = new Block(new List<Stmt>
+                {
+                    body,
+                    new ExpressionStatement(increment)
+                });
+
+            //wrap body in while loop with condition
+            if (condition != null)
+                body = new WhileStatement(condition, body);
+
+            //if there's an initializer combine it with body to form the outer block
+            if (initializer != null)
+                body = new Block(new List<Stmt>
+                {
+                    initializer,
+                    body
+                });
+
+            return body;
+        }
+
         private Stmt IfStatement()
         {
             if (!TryParse(LEFT_PAREN))
-                throw new ParserError(Current, "'(' expected after if.");
+                throw new ParserError(Current, "'(' expected after 'if'.");
 
             Expr condition = Expression();
 
             if (!TryParse(RIGHT_PAREN))
-                throw new ParserError(Current, "')' expected after if condition.");
+                throw new ParserError(Current, "')' expected after 'if' condition.");
 
             Stmt thenBranch = Statement();
 
@@ -113,12 +181,12 @@ namespace cslox
         private Stmt WhileStatement()
         {
             if (!TryParse(LEFT_PAREN))
-                throw new ParserError(Current, "'(' expected after while.");
+                throw new ParserError(Current, "'(' expected after 'while'.");
 
             Expr condition = Expression();
 
             if (!TryParse(RIGHT_PAREN))
-                throw new ParserError(Current, "')' expected after while condition.");
+                throw new ParserError(Current, "')' expected after 'while' condition.");
 
             Stmt body = Statement();
 
