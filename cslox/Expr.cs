@@ -12,6 +12,7 @@ namespace cslox
             T VisitBinary(Binary binary);
             T VisitGrouping(Grouping grouping);
             T VisitLiteral(Literal literal);
+            T VisitLogical(Logical logical);
             T VisitUnary(Unary unary);
             T VisitVariable(Variable variable);
         }
@@ -82,6 +83,25 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitLiteral(this);
+        }
+    }
+
+    class Logical : Expr
+    {
+        public readonly Expr Left;
+        public readonly Token Op;
+        public readonly Expr Right;
+
+        public Logical(Expr left, Token op, Expr right)
+        {
+            Left = left;
+            Op = op;
+            Right = right;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitLogical(this);
         }
     }
 

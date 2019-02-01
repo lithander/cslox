@@ -15,7 +15,9 @@ namespace cslox
         printStmt       → "print" expression ";" ;
         block           → "{" declaration* "}" ;
         expression      → assignment ;
-        assignment      → IDENTIFIER "=" assignment | equality ;
+        assignment      → IDENTIFIER "=" assignment | logic_or ;
+        logic_or        → logic_and ("or" logic_and )* ;
+        logic_and       → equality ("and" equality )* ;
         equality        → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison      → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
         addition        → multiplication ( ( "-" | "+" ) multiplication )* ;
@@ -165,7 +167,7 @@ namespace cslox
 
         private Expr Assignment()
         {
-            Expr expr = Equality();
+            Expr expr = Or();
 
             if (TryParse(EQUAL))
             {
@@ -181,6 +183,30 @@ namespace cslox
                 throw new ParserError(equals, "assignment target is invalid!");
             }
 
+            return expr;
+        }
+
+        private Expr Or()
+        {
+            Expr expr = And();
+            while (TryParse(OR))
+            {
+                Token op = Previous;
+                Expr right = And();
+                expr = new Logical(expr, op, right);
+            }
+            return expr;
+        }
+
+        private Expr And()
+        {
+            Expr expr = Equality();
+            while (TryParse(AND))
+            {
+                Token op = Previous;
+                Expr right = Equality();
+                expr = new Logical(expr, op, right);
+            }
             return expr;
         }
 

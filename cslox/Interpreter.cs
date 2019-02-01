@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using static cslox.TokenType;
 
 namespace cslox
 {
@@ -24,25 +21,25 @@ namespace cslox
         {
             switch (binary.Op.Type)
             {
-                case TokenType.MINUS:
+                case MINUS:
                     return EvalBinary(binary, (l, r) => l - r);
-                case TokenType.SLASH:
+                case SLASH:
                     return EvalBinary(binary, (l, r) => l / r);
-                case TokenType.STAR:
+                case STAR:
                     return EvalBinary(binary, (l, r) => l * r);
-                case TokenType.PLUS:
+                case PLUS:
                     return EvalBinaryPlus(binary);
-                case TokenType.GREATER:
+                case GREATER:
                     return EvalBinary(binary, (l, r) => l > r);
-                case TokenType.GREATER_EQUAL:
+                case GREATER_EQUAL:
                     return EvalBinary(binary, (l, r) => l >= r);
-                case TokenType.LESS:
+                case LESS:
                     return EvalBinary(binary, (l, r) => l < r);
-                case TokenType.LESS_EQUAL:
+                case LESS_EQUAL:
                     return EvalBinary(binary, (l, r) => l <= r);
-                case TokenType.EQUAL_EQUAL:
+                case EQUAL_EQUAL:
                     return IsBinaryEqual(binary);
-                case TokenType.BANG_EQUAL:
+                case BANG_EQUAL:
                     return !IsBinaryEqual(binary);
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -64,11 +61,11 @@ namespace cslox
             object right = unary.Right.Accept(this);
             switch (unary.Op.Type)
             {
-                case TokenType.MINUS:
+                case MINUS:
                     if(right is double dRight)
                         return -dRight;
                     throw new InterpreterError(unary.Op, "Operand must be a number!");
-                case TokenType.BANG:
+                case BANG:
                     return !IsTrue(right);
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -177,6 +174,20 @@ namespace cslox
                 ifStatement.ElseBranch.Accept(this);
     
             return true;
+        }
+
+        public object VisitLogical(Logical logical)
+        {
+            object left = logical.Left.Accept(this);
+
+            if (logical.Op.Type == OR && IsTrue(left))
+                return left;//early out -> TRUE
+
+            if (logical.Op.Type == AND && !IsTrue(left))
+                return left;//early out -> FALSE
+
+            object right = logical.Right.Accept(this);
+            return right;
         }
     }   
 }
