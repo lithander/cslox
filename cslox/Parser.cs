@@ -9,10 +9,11 @@ namespace cslox
         program         → declaration* EOF ;
         declaration     → varDecl | statement ;
         varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement       → exprStmt | ifStmt | printStmt | block ;
+        statement       → exprStmt | ifStmt | printStmt | whileStmt | block ;
         exprStmt        → expression ";" ;
         ifStmt          → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt       → "print" expression ";" ;
+        whileStmt       → "while" "(" expression ")" statement ;
         block           → "{" declaration* "}" ;
         expression      → assignment ;
         assignment      → IDENTIFIER "=" assignment | logic_or ;
@@ -78,6 +79,9 @@ namespace cslox
             if (TryParse(IF))
                 return IfStatement();
 
+            if (TryParse(WHILE))
+                return WhileStatement();
+
             if (TryParse(PRINT))
                 return PrintStatement();
 
@@ -104,6 +108,21 @@ namespace cslox
                 elseBranch = Statement();
 
             return new IfStatement(condition, thenBranch, elseBranch);
+        }
+
+        private Stmt WhileStatement()
+        {
+            if (!TryParse(LEFT_PAREN))
+                throw new ParserError(Current, "'(' expected after while.");
+
+            Expr condition = Expression();
+
+            if (!TryParse(RIGHT_PAREN))
+                throw new ParserError(Current, "')' expected after while condition.");
+
+            Stmt body = Statement();
+
+            return new WhileStatement(condition, body);
         }
 
         private Block Block()

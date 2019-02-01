@@ -13,6 +13,7 @@ namespace cslox
             T VisitIfStatement(IfStatement ifStatement);
             T VisitPrintStatement(PrintStatement printStatement);
             T VisitVarStatement(VarStatement varStatement);
+            T VisitWhileStatement(WhileStatement whileStatement);
         }
 
         abstract public T Accept<T>(Visitor<T> visitor);
@@ -96,6 +97,23 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitVarStatement(this);
+        }
+    }
+
+    class WhileStatement : Stmt
+    {
+        public readonly Expr Condition;
+        public readonly Stmt Body;
+
+        public WhileStatement(Expr condition, Stmt body)
+        {
+            Condition = condition;
+            Body = body;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitWhileStatement(this);
         }
     }
 

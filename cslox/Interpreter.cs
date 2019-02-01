@@ -189,5 +189,16 @@ namespace cslox
             object right = logical.Right.Accept(this);
             return right;
         }
+
+        public bool VisitWhileStatement(WhileStatement whileStatement)
+        {
+            object condition = whileStatement.Condition.Accept(this);
+            while (IsTrue(condition))
+            {
+                whileStatement.Body.Accept(this);
+                condition = whileStatement.Condition.Accept(this);
+            }
+            return true;
+        }
     }   
 }

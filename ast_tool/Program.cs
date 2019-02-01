@@ -24,7 +24,8 @@ namespace ast_codgen
             "Block               : List<Stmt> statements",
             "IfStatement         : Expr condition, Stmt thenBranch, Stmt elseBranch",
             "PrintStatement      : Expr expression",
-            "VarStatement        : Token name, Expr initializer"  
+            "VarStatement        : Token name, Expr initializer",
+            "WhileStatement      : Expr condition, Stmt body"
         };
 
         private static StreamWriter _writer;
