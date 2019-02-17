@@ -10,9 +10,10 @@ namespace cslox
         {
             T VisitExpressionStatement(ExpressionStatement expressionStatement);
             T VisitBlock(Block block);
+            T VisitFunctionDeclaration(FunctionDeclaration functionDeclaration);
             T VisitIfStatement(IfStatement ifStatement);
             T VisitPrintStatement(PrintStatement printStatement);
-            T VisitVarStatement(VarStatement varStatement);
+            T VisitVarDeclaration(VarDeclaration varDeclaration);
             T VisitWhileStatement(WhileStatement whileStatement);
         }
 
@@ -46,6 +47,25 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitBlock(this);
+        }
+    }
+
+    class FunctionDeclaration : Stmt
+    {
+        public readonly Token Name;
+        public readonly List<Token> Parameters;
+        public readonly List<Stmt> Body;
+
+        public FunctionDeclaration(Token name, List<Token> parameters, List<Stmt> body)
+        {
+            Name = name;
+            Parameters = parameters;
+            Body = body;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitFunctionDeclaration(this);
         }
     }
 
@@ -83,12 +103,12 @@ namespace cslox
         }
     }
 
-    class VarStatement : Stmt
+    class VarDeclaration : Stmt
     {
         public readonly Token Name;
         public readonly Expr Initializer;
 
-        public VarStatement(Token name, Expr initializer)
+        public VarDeclaration(Token name, Expr initializer)
         {
             Name = name;
             Initializer = initializer;
@@ -96,7 +116,7 @@ namespace cslox
 
         override public T Accept<T>(Visitor<T> visitor)
         {
-            return visitor.VisitVarStatement(this);
+            return visitor.VisitVarDeclaration(this);
         }
     }
 

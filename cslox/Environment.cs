@@ -10,7 +10,7 @@ namespace cslox
     {
         //TODO: consider defining and using EnvironmentError
 
-        private Dictionary<string, object> _globals = new Dictionary<string, object>();
+        private Dictionary<string, object> _values = new Dictionary<string, object>();
         private Environment _parent = null;
 
         internal Environment()
@@ -24,7 +24,7 @@ namespace cslox
 
         internal object Get(Token name)
         {
-            if (_globals.TryGetValue(name.Lexeme, out var value))
+            if (_values.TryGetValue(name.Lexeme, out var value))
                 return value;
 
             if (_parent != null)
@@ -33,15 +33,15 @@ namespace cslox
             throw new Interpreter.InterpreterError(name, "Variable must be declared before use!");
         }
 
-        internal void Declare(string name, object value)
+        internal void Define(string name, object value)
         {
-            _globals[name] = value;
+            _values[name] = value;
         }
 
         internal void Assign(Token name, object value)
         {
-            if (_globals.ContainsKey(name.Lexeme))
-                _globals[name.Lexeme] = value;
+            if (_values.ContainsKey(name.Lexeme))
+                _values[name.Lexeme] = value;
             else if (_parent != null)
                 _parent.Assign(name, value);
             else

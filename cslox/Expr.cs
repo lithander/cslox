@@ -10,6 +10,7 @@ namespace cslox
         {
             T VisitAssign(Assign assign);
             T VisitBinary(Binary binary);
+            T VisitCall(Call call);
             T VisitGrouping(Grouping grouping);
             T VisitLiteral(Literal literal);
             T VisitLogical(Logical logical);
@@ -53,6 +54,25 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitBinary(this);
+        }
+    }
+
+    class Call : Expr
+    {
+        public readonly Expr Callee;
+        public readonly Token Paren;
+        public readonly List<Expr> Arguments;
+
+        public Call(Expr callee, Token paren, List<Expr> arguments)
+        {
+            Callee = callee;
+            Paren = paren;
+            Arguments = arguments;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitCall(this);
         }
     }
 

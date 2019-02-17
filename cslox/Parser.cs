@@ -7,8 +7,10 @@ namespace cslox
     /* LOX EXPRESSION GRAMMAR (Chapter 6.2)
     
         program         → declaration* EOF ;
-        declaration     → varDecl | statement ;
+        declaration     → varDecl | funDecl | statement ;
         varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
+        funDecl         → "fun" function;
+        function        → IDENTIFIER "(" parameters? ")" block ;
         statement       → exprStmt | ifStmt | printStmt | whileStmt | forStmt | block ;
         exprStmt        → expression ";" ;
         ifStmt          → "if" "(" expression ")" statement ( "else" statement )? ;
@@ -24,7 +26,9 @@ namespace cslox
         comparison      → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
         addition        → multiplication ( ( "-" | "+" ) multiplication )* ;
         multiplication  → unary ( ( "/" | "*" ) unary )* ;
-        unary           → ( "!" | "-" ) unary | primary ;
+        unary           → ( "!" | "-" ) unary | call ;
+        call            → primary ( "(" arguments? ")" )* ;
+        arguments       → expression ( "," expression )* ;
         primary         → NUMBER | STRING | "false" | "true" | "nil"
                         | "(" expression ")" | IDENTIFIER ;
     */
@@ -70,10 +74,64 @@ namespace cslox
         private Stmt Declaration()
         {
             if (TryParse(VAR))
-                return VarStatement();
+                return VarDeclaration();
+
+            if (TryParse(FUN))
+                return FunDeclaration();
 
             return Statement();
         }
+        
+        private Stmt VarDeclaration()
+        {
+            if (!TryParse(IDENTIFIER))
+                throw new ParserError(Current, "variable name expected.");
+
+            Token varName = Previous;
+
+            Expr initializer = null;
+            if (TryParse(EQUAL))
+                initializer = Expression();
+
+            if (TryParse(SEMICOLON))
+                return new VarDeclaration(varName, initializer);
+
+            throw new ParserError(Current, "';' expected after variable declaration.");
+        }
+        
+        private FunctionDeclaration FunDeclaration()
+        {
+            if (!TryParse(IDENTIFIER))
+                throw new ParserError(Current, "variable name expected.");
+
+            Token funName = Previous;
+
+            List<Token> parameters = new List<Token>();
+            if (!TryParse(LEFT_PAREN))
+                throw new ParserError(Current, "'(' expected in function declaration after name.");
+            
+            if(Current.Type != RIGHT_PAREN)
+            {
+                do
+                {
+                    if (TryParse(IDENTIFIER))
+                        parameters.Add(Previous);
+                    else
+                        throw new ParserError(Current, "parameter name expected.");
+                }
+                while (TryParse(COMMA));
+            }
+
+            if (!TryParse(RIGHT_PAREN))
+                throw new ParserError(Current, "')' expected in function declaration after parameters.");
+
+            if (!TryParse(LEFT_BRACE))
+                throw new ParserError(Current, "'{' expected in function declaration before body.");
+
+            var body = Block();
+            return new FunctionDeclaration(funName, parameters, body.Statements);
+        }
+
 
         private Stmt Statement()
         {
@@ -106,7 +164,7 @@ namespace cslox
             if(!TryParse(SEMICOLON)) //initializer skipped?
             {
                 if (TryParse(VAR))
-                    initializer = VarStatement();
+                    initializer = VarDeclaration();
                 else
                     initializer = ExpressionStatement();
             }
@@ -203,23 +261,6 @@ namespace cslox
                 return new Block(statements);
 
             throw new ParserError(Current, "'}' expected after block.");
-        }
-
-        private Stmt VarStatement()
-        {
-            if (!TryParse(IDENTIFIER))
-                throw new ParserError(Current, "variable name expected.");
-
-            Token varName = Previous;
-
-            Expr initializer = null;
-            if (TryParse(EQUAL))
-                initializer = Expression();
-
-            if (TryParse(SEMICOLON))
-                return new VarStatement(varName, initializer);
-
-            throw new ParserError(Current, "';' expected after variable declaration.");
         }
 
         private Stmt ExpressionStatement()
@@ -359,7 +400,42 @@ namespace cslox
                 Expr right = Unary();
                 return new Unary(op, right);
             }
-            return Primary();
+            return Call();
+        }
+
+        private Expr Call()
+        {
+            Expr expr = Primary();
+            while(TryParse(LEFT_PAREN))
+            {
+                expr = FinishCall(expr);
+            }
+
+            return expr;
+        }
+
+        private Expr FinishCall(Expr expr)
+        {
+            var paren = Previous;
+
+            //it's a call - parse one or more arguments
+            List<Expr> arguments = new List<Expr>();
+            if (!Done && Current.Type != RIGHT_PAREN)
+            {
+                do
+                {
+                    arguments.Add(Expression());
+                }
+                while (TryParse(COMMA));
+            }
+
+            if (!TryParse(RIGHT_PAREN))
+                throw new ParserError(Current, "')' expected after function call arguments.");
+
+            if (arguments.Count > 8)
+                throw new ParserError(Current, "Cannot have more than 8 arguments."); //because the book says 8 is enough :P
+
+            return new Call(expr, paren, arguments);
         }
 
         private Expr Primary()

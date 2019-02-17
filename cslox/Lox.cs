@@ -35,8 +35,8 @@ namespace cslox
 
             if (args.Length == 1)
                 RunFile(args[0]);
-            else
-                RunPromt();
+
+            RunPromt();
         }
 
         private static void SetCulture()
@@ -97,10 +97,6 @@ namespace cslox
             {
                 Error("Runtime", source, error.Token.Position, error.Message);
             }
-            finally
-            {
-                _error = ERROR_FAILURE;
-            }
         }
 
         internal static void Print(object value)
@@ -110,6 +106,8 @@ namespace cslox
 
         private static void Error(string prefix, string source, int _pos, string message)
         {
+            _error = ERROR_FAILURE;
+
             IdentifyLine(source, _pos, out int lineNumber, out int lineStart, out int linePos, out int lineEnd);
             Console.WriteLine($"[line {lineNumber}] {prefix} Error: {message}");
 

@@ -1,12 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using static cslox.TokenType;
 
 namespace cslox
 {
     class Interpreter : Expr.Visitor<object>, Stmt.Visitor<bool>
     {
-        private Environment _env = new Environment();
-
         public class InterpreterError : Exception
         {
             public readonly Token Token;
@@ -14,6 +13,34 @@ namespace cslox
             public InterpreterError(Token token, string message) : base(message)
             {
                 Token = token;
+            }
+        }
+
+        readonly private Environment _rootEnv;
+        private Environment _env;
+
+        public Environment Globals => _rootEnv;
+
+        public Interpreter()
+        {
+            _rootEnv = new Environment();
+            _rootEnv.Define("clock", new StdLib.Clock());
+
+            _env = _rootEnv;
+        }
+
+        internal void Execute(List<Stmt> body, Environment env)
+        {
+            var previous = _env;
+            _env = env;
+            try
+            {
+                foreach (var stmt in body)
+                    stmt.Accept(this);
+            }
+            finally
+            {
+                _env = previous;
             }
         }
 
@@ -95,11 +122,13 @@ namespace cslox
         {
             object left = binary.Left.Accept(this);
             object right = binary.Right.Accept(this);
-            if (left is string sLeft && right is string sRight)
-                return sLeft + sRight;
             if (left is double dLeft && right is double dRight)
                 return dLeft + dRight;
-            throw new InterpreterError(binary.Op, "Operands must be two numbers or two strings.");
+            if (left is string sLeft && right is string sRight)
+                return sLeft + sRight;
+
+            //throw new InterpreterError(binary.Op, "Operands must be two numbers or two strings.");
+            return left.ToString() + right.ToString();
         }
 
         private object EvalBinary(Binary binary, Func<double, double, object> operation)
@@ -133,11 +162,15 @@ namespace cslox
             return _env.Get(variable.Name);
         }
 
-        public bool VisitVarStatement(VarStatement varStatement)
+        public bool VisitVarDeclaration(VarDeclaration varStatement)
         {
             string name = varStatement.Name.Lexeme;
-            object value = varStatement.Initializer.Accept(this);
-            _env.Declare(name, value);
+            object value = null;
+
+            if(varStatement.Initializer != null)
+                value = varStatement.Initializer.Accept(this);
+
+            _env.Define(name, value);
             return true;
         }
 
@@ -171,7 +204,7 @@ namespace cslox
             if (IsTrue(condition))
                 ifStatement.ThenBranch.Accept(this);
             else
-                ifStatement.ElseBranch.Accept(this);
+                ifStatement.ElseBranch?.Accept(this);
     
             return true;
         }
@@ -198,6 +231,32 @@ namespace cslox
                 whileStatement.Body.Accept(this);
                 condition = whileStatement.Condition.Accept(this);
             }
+            return true;
+        }
+
+        public object VisitCall(Call call)
+        {
+            object callee = call.Callee.Accept(this);
+            List<object> arguments = new List<object>();
+            foreach (var expr in call.Arguments)
+                arguments.Add(expr.Accept(this));
+
+            if (callee is ICallable function)
+            {
+                if(arguments.Count == function.Arity)
+                    return function.Call(this, arguments);
+
+                throw new InterpreterError(call.Paren, $"{function.Arity} arguments expected but got {arguments.Count}!");
+            }
+
+            throw new InterpreterError(call.Paren, "Call target can not be called!");
+        }
+
+        public bool VisitFunctionDeclaration(FunctionDeclaration function)
+        {
+            string name = function.Name.Lexeme;
+            object value = new LoxFunction(function);
+            _env.Define(name, value);
             return true;
         }
     }   
