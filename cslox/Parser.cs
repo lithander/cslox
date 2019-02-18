@@ -11,10 +11,11 @@ namespace cslox
         varDecl         → "var" IDENTIFIER ( "=" expression )? ";" ;
         funDecl         → "fun" function;
         function        → IDENTIFIER "(" parameters? ")" block ;
-        statement       → exprStmt | ifStmt | printStmt | whileStmt | forStmt | block ;
+        statement       → exprStmt | ifStmt | printStmt | returnStmt | whileStmt | forStmt | block ;
         exprStmt        → expression ";" ;
         ifStmt          → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt       → "print" expression ";" ;
+        returnStmt      → "
         whileStmt       → "while" "(" expression ")" statement ;
         forStmt         → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
         block           → "{" declaration* "}" ;
@@ -144,6 +145,9 @@ namespace cslox
             if (TryParse(FOR))
                 return ForStatement();
 
+            if (TryParse(RETURN))
+                return ReturnStatement();
+
             if (TryParse(PRINT))
                 return PrintStatement();
 
@@ -151,6 +155,19 @@ namespace cslox
                 return Block();
 
             return ExpressionStatement();
+        }
+
+        private Stmt ReturnStatement()
+        {
+            Token keyword = Previous;
+            if (TryParse(SEMICOLON)) //return void
+                return new ReturnStatement(keyword, null);
+
+            Expr expression = Expression();
+            if (!TryParse(SEMICOLON))
+                throw new ParserError(Current, "';' expected after return value.");
+
+            return new ReturnStatement(keyword, expression);
         }
 
         private Stmt ForStatement()

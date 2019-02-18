@@ -15,6 +15,7 @@ namespace cslox
             T VisitPrintStatement(PrintStatement printStatement);
             T VisitVarDeclaration(VarDeclaration varDeclaration);
             T VisitWhileStatement(WhileStatement whileStatement);
+            T VisitReturnStatement(ReturnStatement returnStatement);
         }
 
         abstract public T Accept<T>(Visitor<T> visitor);
@@ -134,6 +135,23 @@ namespace cslox
         override public T Accept<T>(Visitor<T> visitor)
         {
             return visitor.VisitWhileStatement(this);
+        }
+    }
+
+    class ReturnStatement : Stmt
+    {
+        public readonly Token Keyword;
+        public readonly Expr Value;
+
+        public ReturnStatement(Token keyword, Expr value)
+        {
+            Keyword = keyword;
+            Value = value;
+        }
+
+        override public T Accept<T>(Visitor<T> visitor)
+        {
+            return visitor.VisitReturnStatement(this);
         }
     }
 

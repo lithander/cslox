@@ -255,8 +255,16 @@ namespace cslox
         public bool VisitFunctionDeclaration(FunctionDeclaration function)
         {
             string name = function.Name.Lexeme;
-            object value = new LoxFunction(function);
+            object value = new LoxFunction(function, _env);
             _env.Define(name, value);
+            return true;
+        }
+
+        public bool VisitReturnStatement(ReturnStatement returnStatement)
+        {
+            //TODO: the overhead of using an exception to hack stack unwinding makes me cringe :/
+            object value = returnStatement.Value?.Accept(this);
+            LoxFunction.Return(value);
             return true;
         }
     }   

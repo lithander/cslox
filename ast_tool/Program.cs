@@ -11,6 +11,7 @@ namespace ast_codgen
         {
             "Assign   : Token name, Expr value",
             "Binary   : Expr left, Token op, Expr right",
+            "Call     : Expr callee, Token paren, List<Expr> arguments",
             "Grouping : Expr expression",
             "Literal  : Object value",
             "Logical  : Expr left, Token op, Expr right",
@@ -22,10 +23,12 @@ namespace ast_codgen
         {
             "ExpressionStatement : Expr expression",
             "Block               : List<Stmt> statements",
+            "FunctionDeclaration : Token name, List<Token> parameters, List<Stmt> body",
             "IfStatement         : Expr condition, Stmt thenBranch, Stmt elseBranch",
             "PrintStatement      : Expr expression",
-            "VarStatement        : Token name, Expr initializer",
-            "WhileStatement      : Expr condition, Stmt body"
+            "VarDeclaration      : Token name, Expr initializer",
+            "WhileStatement      : Expr condition, Stmt body",
+            "ReturnStatement     : Token keyword, Expr value"
         };
 
         private static StreamWriter _writer;

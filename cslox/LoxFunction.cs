@@ -8,22 +8,46 @@ namespace cslox
 {
     class LoxFunction : ICallable
     {
-        private FunctionDeclaration _decl;
+        public class ReturnException : Exception
+        {
+            public readonly object ReturnValue;
 
-        public LoxFunction(FunctionDeclaration decl)
+            public ReturnException(object value)
+            {
+                ReturnValue = value;
+            }
+        }
+
+        public static void Return(object value)
+        {
+            throw new ReturnException(value);
+        }
+
+        private readonly FunctionDeclaration _decl;
+        private readonly Environment _closure;
+
+        public LoxFunction(FunctionDeclaration decl, Environment closure)
         {
             _decl = decl;
+            _closure = closure;
         }
 
         public int Arity => _decl.Parameters.Count;
 
         public object Call(Interpreter interpreter, List<object> args)
         {
-            Environment env = new Environment(interpreter.Globals);
+            Environment env = new Environment(_closure);
             for(int i = 0; i < _decl.Parameters.Count; i++)
                 env.Define(_decl.Parameters[i].Lexeme, args[i]);
 
-            interpreter.Execute(_decl.Body, env);
+            try
+            {
+                interpreter.Execute(_decl.Body, env);
+            }
+            catch(ReturnException returnEx)
+            {
+                return returnEx.ReturnValue;
+            }
 
             return null;
         }
